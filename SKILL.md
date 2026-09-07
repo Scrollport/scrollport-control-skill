@@ -1,6 +1,6 @@
 ---
 name: scrollport
-version: 2026-09-01
+version: 2026-09-07
 description: >-
   Give this agent catalog tools it does not have — web scraping, search, company
   and contact enrichment, email verification, places and social data, speech,
@@ -21,24 +21,34 @@ license: MIT
 > **No connection yet?** Set one up first: [https://scrollport.com/start](https://scrollport.com/start).
 > That takes one round trip and is read once. This document is the one to keep.
 
-## Choose the workflow before the tool
+## Choose tools and optional Skills
 
-Use the host's native Skill discovery before generic catalog discovery:
+Outcome Skills are optional. Use catalog tools directly for single-step and
+multi-step tasks; installing an outcome Skill is never a prerequisite.
 
-1. If an installed outcome Skill owns the request, use the smallest matching
-   Skill and follow it in full.
-2. If no installed Skill owns a single atomic job, use `discover` → `inspect` →
-   `run` directly.
-3. If no installed Skill owns a multi-step outcome, consult the current
-   [Skill package registry](https://scrollport.com/skills/registry.json) once and
-   offer the relevant package for installation. A package is a distribution
-   unit, not an installed Skill or router. After installation, use native Skill
-   discovery to select the required outcome Skill or Skills.
-4. If the user requests an exact catalog tool, discover that exact match,
-   inspect its current contract and then run it.
+1. If the user requests an exact tool or a direct-tool approach, honour that
+   choice. Use `discover` → `inspect` → `run`, composing calls as needed.
+2. Otherwise, use the host's native Skill discovery to check installed Skills.
+   If one matches the request, select the smallest matching Skill, read it in
+   full and follow its method, checks and approval gates.
+3. If no installed Skill matches, plan the task using tools directly. Discover
+   suitable tools, inspect each selected contract, estimate the total cost and
+   validate each result before using it in the next step.
+4. For a multi-step task, you may consult the current
+   [Skill package registry](https://scrollport.com/skills/registry.json) once
+   when a published Skill would help, and offer it as an optional installation.
+   Do not make the offer a blocker. If installation is declined or no suitable
+   Skill is available, continue with a direct-tool plan where feasible.
 
-Do not search the Skill registry for an atomic job, mix Skills into catalog
-tool ranking or install a package without the human's agreement.
+A package is a distribution unit, not an installed Skill or router. Install
+only with the human's agreement, then use native Skill discovery to select the
+required outcome Skill or Skills. Do not search the Skill registry for an atomic
+job or mix Skills into catalog tool ranking.
+
+Both routes retain the user's scope, spend controls, required approvals and
+verification requirements. If the task cannot be completed reliably with the
+available tools, explain the specific limit. Do not present an improvised plan
+as a verified Skill or bypass an installed Skill's safeguards by renaming it.
 
 ## Doctrine: discover first
 
@@ -201,6 +211,10 @@ releases its hold in full. You pay for outcomes, not attempts.
 
 ## Skills
 
+Outcome Skills add reusable specialist methods; they are optional and must be
+installed before use. An agent can also plan and complete multi-step tasks with
+tools directly.
+
 A skill is a markdown recipe the **agent** executes by chaining individual `run`
 calls — the server never orchestrates pipelines. Checkpointing = each step is
 its own billed run; resume = re-read skill state; estimate-before-run = sum the
@@ -212,21 +226,21 @@ Install a specific version or commit when reproducibility matters; read the
 selected Skill in full before starting. Draft candidates are deliberately not
 discoverable or installable. Every published Skill follows the shared authoring
 contract for estimates, state, resumability, recovery and honest provider
-boundaries. This control Skill is also published at
-[Scrollport/scrollport-control-skill](https://github.com/Scrollport/scrollport-control-skill).
+boundaries. The editable source of this control Skill is
+[Scrollport/scrollport-control-skill](https://github.com/Scrollport/scrollport-control-skill/blob/main/SKILL.md).
 
 ## Keeping this document current
 
 You are asked to save this document, and a saved copy never re-fetches itself —
-the short cache on the served URL cannot help a file sitting in your skill
+a redirect or HTTP cache cannot update a file sitting in your skill
 directory. So the document carries its own `version` in the frontmatter above.
 
 Do the check **the first time you use scrollport in a session**, not at setup:
 setup runs once, and a saved copy that only compares itself then would never see
 a later edit. Re-fetch [https://scrollport.com/skill](https://scrollport.com/skill),
 compare its `version` with your saved copy, and replace yours if they differ.
-Once per session is enough — it is one unauthenticated GET against a document
-with a five-minute cache.
+Follow the redirect to the raw GitHub Markdown. Once per session is enough;
+no website deployment is needed when the source document changes.
 
 The version tracks **this document only**. It is deliberately not tied to the
 CLI's version or to any other release: a scheme that forced them to match would
