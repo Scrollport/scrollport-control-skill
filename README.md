@@ -12,7 +12,7 @@ this single-Skill source repository does not need that nesting.
 
 Outcome Skills are optional. The agent can compose tools directly for both
 simple and multi-step tasks. Ready-made outcome Skills live in the public
-[SEO and search](https://github.com/Scrollport/seo-search-skills),
+[Search and SEO](https://github.com/Scrollport/search-seo-skills),
 [Sales and prospecting](https://github.com/Scrollport/sales-prospecting-skills)
 and [Media creation](https://github.com/Scrollport/media-creation-skills) packages.
 
