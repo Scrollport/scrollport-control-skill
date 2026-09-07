@@ -5,19 +5,27 @@ tools: `apps`, `discover`, `inspect`, `run` and `wallet`.
 
 ## Install
 
-Install [`skills/scrollport/SKILL.md`](skills/scrollport/SKILL.md) in any
-Agent Skills compatible host, then follow
-[Scrollport setup](https://scrollport.com/start) to connect the agent.
+Install the root [`SKILL.md`](SKILL.md) in an Agent Skills compatible host,
+then follow [Scrollport setup](https://scrollport.com/start) to connect the agent.
+A host may put the installed file in its own `skills/scrollport/` directory;
+this single-Skill source repository does not need that nesting.
 
-This repository publishes only the control Skill. Outcome Skills live in the
-public [SEO and search](https://github.com/Scrollport/seo-search-skills),
+Outcome Skills are optional. The agent can compose tools directly for both
+simple and multi-step tasks. Ready-made outcome Skills live in the public
+[SEO and search](https://github.com/Scrollport/seo-search-skills),
 [Sales and prospecting](https://github.com/Scrollport/sales-prospecting-skills)
-and [Media creation](https://github.com/Scrollport/media-creation-skills)
-packages.
+and [Media creation](https://github.com/Scrollport/media-creation-skills) packages.
 
-## Source
+## Source and publication
 
-The editable source is
-[`skills/SKILL.md`](https://github.com/v20x/scrollport/blob/main/skills/SKILL.md)
-in the Scrollport product repository. This public repository is its release
-mirror so the website, plugin and installable Skill stay aligned.
+This repository is the editable authority. Update `SKILL.md`, bump its date-based
+`version`, run `npm test` and merge the reviewed change to `main`.
+
+The website's stable `/skill` route redirects to
+[`SKILL.md` as raw Markdown](https://raw.githubusercontent.com/Scrollport/scrollport-control-skill/refs/heads/main/SKILL.md).
+After the one-time website cutover, guidance changes need only a GitHub merge;
+there is no website copy, synchronization job or deployment for each edit.
+
+The product repository still owns `/start` and the API contract. Coordinate
+changes to tool names, prices, authorization or spend controls with that contract.
+The plugin uses this same core guidance with its additional transport restrictions.
