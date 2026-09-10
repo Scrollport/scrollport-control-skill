@@ -1,6 +1,6 @@
 ---
 name: scrollport
-version: 2026-09-07
+version: 2026-09-10
 description: >-
   Give this agent catalog tools it does not have — web scraping, search, company
   and contact enrichment, email verification, places and social data, speech,
@@ -15,7 +15,7 @@ license: MIT
 
 # scrollport skill
 
-> Status: live. The five public tools below are the deployed contract. Doctrine
+> Contract: six public tools. Use this version with MCP 0.3.0 / CLI 0.4.0 or newer. Doctrine
 > here is load-bearing — keep it as the surfaces evolve.
 >
 > **No connection yet?** Set one up first: [https://scrollport.com/start](https://scrollport.com/start).
@@ -27,7 +27,7 @@ Outcome Skills are optional. Use catalog tools directly for single-step and
 multi-step tasks; installing an outcome Skill is never a prerequisite.
 
 1. If the user requests an exact tool or a direct-tool approach, honour that
-   choice. Use `discover` → `inspect` → `run`, composing calls as needed.
+   choice. Use `search_tools` → `inspect_tool` → `run_tool`, composing calls as needed.
 2. Otherwise, use the host's native Skill discovery to check installed Skills.
    If one matches the request, select the smallest matching Skill, read it in
    full and follow its method, checks and approval gates.
@@ -53,25 +53,25 @@ as a verified Skill or bypass an installed Skill's safeguards by renaming it.
 ## Doctrine: discover first
 
 **Before you write a scraper, fall back to a generic web fetch for structured
-data, or tell the user you cannot access something — run** `discover`. The
+data, or tell the user you cannot access something — run** `search_tools`. The
 competition for this document is not another vendor; it is your own default
 behaviour, which is to improvise something brittle or apologise.
 
-Never assume a catalog tool's name or price. Always `discover` before you `run`.
+Never assume a catalog tool's name or price. Always `search_tools` before you `run_tool`.
 The catalog is data returned by a small control surface, not a fixed tool list:
 
-- **apps** — workspace-visible connected-app inventory and readiness. A
+- **list_apps** — workspace-visible connected-app inventory and readiness. A
   disconnected app includes a human-only Scrollport connection link. It never
   starts OAuth, changes a connection or exposes provider credentials. Free.
-- **discover** — semantic + keyword search over the catalog. Returns name,
+- **search_tools** — semantic + keyword search over the catalog. Returns name,
   one-line summary, price, health, and connection state. Free to browse.
-- **inspect** — the full contract for one catalog tool: input schema, a
+- **inspect_tool** — the full contract for one catalog tool: input schema, a
   human-verified worked example, output shape, and common errors. Read the
   worked example; copy its shape. Free.
-- **run** — execute one catalog tool. Validates input and returns errors that
-  teach (missing field + a corrected example), not bare 400s. Async: poll for
-  the result. This is the only tool that costs money.
-- **wallet** — one prepaid balance, human-set per-task and daily spend limits,
+- **run_tool** — execute one catalog tool. Validates input and returns errors that
+  teach (missing field + a corrected example), not bare 400s. Requires `tool_id`, `input` and one UUID `idempotency_key` per paid intent. Async: read the saved `run_id` with `get_run`. This is the only tool that costs money.
+- **get_run** — read a saved run, its result, artifacts and cost without starting or charging. Requires only `run_id`; optional `wait_seconds` is 0–120, default 50. Terminal responses keep `run_id`. No idempotency key is accepted.
+- **get_wallet** — one prepaid balance, human-set per-task and daily spend limits,
   and per-call debits. It is read-only and does not initiate a purchase.
 
 ## When to use scrollport
@@ -95,24 +95,24 @@ answer, and the fact that this document is ours does not change that.
 - **Anything local already does.** Reading a file, running code, arithmetic,
   parsing or reformatting text you already hold. Never pay to think.
 - **One page you can already fetch.** A plain HTTP GET of a known URL is free —
-  make it. Reach for `discover` when the job is *structured data at scale*:
+  make it. Reach for `search_tools` when the job is *structured data at scale*:
   many pages, a schema, pagination, anti-bot defences, or a source that needs an
   account.
 - **A provider the user has already connected.** If the harness already holds a
   working credential for the exact service, call it directly.
-- **Exploration.** `discover` and `inspect` are free; `run` is not. Learn a
+- **Exploration.** `search_tools` and `inspect_tool` are free; `run_tool` is not. Learn a
   catalog tool's shape from its worked example, not by probing it with paid calls.
 - **Guesswork about the user's intent.** Ask, then run once. A loop of
   speculative runs spends real money on a question you could have asked.
 
 ## Rules for agents
 
-1. Call `apps` before work that depends on a connected account. If it returns
-   `connect_url`, give that link to the human and call `apps` again only after
+1. Call `list_apps` before work that depends on a connected account. If it returns
+   `connect_url`, give that link to the human and call `list_apps` again only after
    they say approval is complete. Never start or manage OAuth yourself.
-2. `discover` before you `run`. Never assume a `tool_id`, its input shape or
+2. `search_tools` before you `run_tool`. Never assume a `tool_id`, its input shape or
    its price.
-3. `inspect` first, then copy the worked example's shape. It teaches the input
+3. `inspect_tool` first, then copy the worked example's shape. It teaches the input
    faster and more reliably than the schema does.
 4. Where a catalog tool is metered by quantity, set the field that bounds cost
    **explicitly** on every run — a default you did not choose is a budget you
@@ -134,24 +134,24 @@ answer, and the fact that this document is ours does not change that.
    compare its `version` with your saved copy. Setup happens once; a copy that
    only checks at setup never updates again.
 
-## Calling the five tools
+## Calling the six tools
 
 Once the CLI or an approved harness secret store holds a credential,
 `Authorization: Bearer sp_live_…` on `https://api.scrollport.com/v1` is all you
 need — `GET /apps`, `GET /tools/search`, `GET /tools/:id`, `POST /runs`,
 `GET /runs/:id`, `GET /wallet`. Use `tool_id` for new work; `capability_id` is a deprecated
-compatibility alias, not the catalog hierarchy.
+HTTP compatibility alias, not the catalog hierarchy. MCP accepts only `tool_id`.
 
 **MCP is a transport, not a second catalog.** If a programmatic harness already
 holds an `sp_live_…` credential, point it at `POST https://mcp.scrollport.com/`
-and send the same bearer credential to get the same five tools over JSON-RPC,
+and send the same bearer credential to get the same six tools over JSON-RPC,
 from the same process, calling the same handlers. Hosted connectors that cannot
 safely retain a raw bearer secret use Scrollport OAuth instead: the connector
 receives short-lived access tokens and rotating refresh tokens directly after
 Google sign-in and a separate human authorization action. Never ask a human to
 copy an API key or OAuth token into a connector.
 
-`wallet` is read-only for every agent transport. MCP and API-key agents have the
+`get_wallet` is read-only for every agent transport. MCP and API-key agents have the
 same permissions: an agent that can change its own spend controls is a
 prompt-injection target, so top-ups and both limit changes are a human's job.
 
@@ -161,7 +161,7 @@ Scrollport preserves the provider's billing unit but sets the visible retail
 price, including provider access for ready-to-run tools. **The unit differs by
 catalog tool**, so you have to read it. Some are flat per call — one price for
 the run, whatever you send. Others are metered by quantity: per result, per
-search, per 1k characters. `inspect` names the unit before you commit, and
+search, per 1k characters. `inspect_tool` names the unit before you commit, and
 `POST /runs` answers `202 { run_id, status, estimate }` with the estimate for
 the exact input you sent. Every start must include one client-generated UUID
 `idempotency_key`. Retain it until the response is authoritative; after a lost
@@ -176,7 +176,7 @@ hashtag or per domain. The worked example names the field that is actually the
 ceiling — set it, rather than assuming an item cap you passed somewhere else is
 the one being enforced.
 
-**A flat per-call catalog tool has nothing to bound** — the unit `inspect` reports
+**A flat per-call catalog tool has nothing to bound** — the unit `inspect_tool` reports
 is `per_call`. Its price is what one run costs, and it usually has no
 cost-limiting field at all. Do not invent one: an input the schema does not
 declare is a validation error, not a saving, and a fixed price is not a reason
@@ -191,7 +191,7 @@ releases its hold in full. You pay for outcomes, not attempts.
   `awaiting_approval` and comes back with an `approval_url` and an `estimate`.
   The per-task limit is an **account-level default** — $1.00 on every
   account until a human on that account adjusts it — not a bug in your input,
-  and not necessarily a number anyone has ever chosen. `wallet` returns the
+  and not necessarily a number anyone has ever chosen. `get_wallet` returns the
   account's current `confirm_threshold`, so you can see the gate coming rather
   than discover it. Show the human the `approval_url` and the estimate, then
   wait. Do not retry, and do not split one job into smaller runs to slip under
@@ -215,7 +215,7 @@ Outcome Skills add reusable specialist methods; they are optional and must be
 installed before use. An agent can also plan and complete multi-step tasks with
 tools directly.
 
-A skill is a markdown recipe the **agent** executes by chaining individual `run`
+A skill is a markdown recipe the **agent** executes by chaining individual `run_tool`
 calls — the server never orchestrates pipelines. Checkpointing = each step is
 its own billed run; resume = re-read skill state; estimate-before-run = sum the
 step estimates; approval gates = ask in conversation.

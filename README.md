@@ -1,7 +1,7 @@
 # Scrollport control Skill
 
-Give an AI agent access to Scrollport's live tool catalog through five control
-tools: `apps`, `discover`, `inspect`, `run` and `wallet`.
+Give an AI agent access to Scrollport's live tool catalog through six control
+tools: `list_apps`, `search_tools`, `inspect_tool`, `run_tool`, `get_run` and `get_wallet`.
 
 ## Install
 
