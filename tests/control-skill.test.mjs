@@ -7,9 +7,9 @@ import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const instruction = readFileSync(resolve(root, "SKILL.md"), "utf8");
 
-test("publishes one current five-tool control Skill", () => {
-  assert.match(instruction, /^---\nname: scrollport\nversion: 2026-09-07\n/);
-  for (const tool of ["apps", "discover", "inspect", "run", "wallet"]) {
+test("publishes one current six-tool control Skill", () => {
+  assert.match(instruction, /^---\nname: scrollport\nversion: 2026-09-10\n/);
+  for (const tool of ["search_tools", "inspect_tool", "run_tool", "get_run", "list_apps", "get_wallet"]) {
     assert.match(instruction, new RegExp(`\\*\\*${tool}\\*\\*`));
   }
   assert.match(instruction, /native Skill discovery/);
