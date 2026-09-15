@@ -1,10 +1,12 @@
 ---
 name: scrollport
-version: 2026-09-10
+metadata:
+  version: "2026-09-15"
 description: >-
   Give this agent catalog tools it does not have — web scraping, search, company
   and contact enrichment, email verification, places and social data, speech,
-  music and video — through one Scrollport connection and one prepaid wallet,
+  music and video — plus workspace reference uploads and file management through
+  one Scrollport connection and one prepaid wallet,
   priced per call in dollars with no per-provider signups for ready-to-run tools. Use it before writing a scraper,
   before falling back to a generic web fetch for structured data, and before
   telling the user something is out of reach. Discover a catalog tool, inspect its
@@ -15,7 +17,7 @@ license: MIT
 
 # scrollport skill
 
-> Contract: six public tools. Use this version with MCP 0.3.0 / CLI 0.4.0 or newer. Doctrine
+> Contract: nine public tools. Use this version with MCP 0.4.0 / CLI 0.5.0 or newer. Doctrine
 > here is load-bearing — keep it as the surfaces evolve.
 >
 > **No connection yet?** Set one up first: [https://scrollport.com/start](https://scrollport.com/start).
@@ -73,6 +75,47 @@ The catalog is data returned by a small control surface, not a fixed tool list:
 - **get_run** — read a saved run, its result, artifacts and cost without starting or charging. Requires only `run_id`; optional `wait_seconds` is 0–120, default 50. Terminal responses keep `run_id`. No idempotency key is accepted.
 - **get_wallet** — one prepaid balance, human-set per-task and daily spend limits,
   and per-call debits. It is read-only and does not initiate a purchase.
+- **get_files** — list workspace files and storage usage, or read one `file_id`
+  for its state and a fresh reference URL. Free and read-only.
+- **upload_file** — import a public `source_url`, prepare a raw upload, or call
+  with `{}` for a human upload link. It uses storage, not wallet funds.
+- **delete_file** — permanently delete one authorised `file_id`, including its
+  original run's access to that object. It releases storage after deletion.
+
+## References and saved files
+
+Each workspace has 1 GB shared by uploads and generated artifacts. Reuse a
+ready file with `get_files({ file_id })` and pass its fresh `url` to the catalog
+input named by `inspect_tool`. Keep stable file IDs: signed URLs expire even
+when the underlying file is retained. Ordinary files stay until deletion or
+workspace closure; connected Google content has shorter retention.
+
+Choose an upload path your environment actually supports:
+
+- **MCP-only or inaccessible attachment:** call `upload_file({})`, give
+  `upload_page_url` to the human and save `file.id`. They sign in to the same
+  workspace and drag/drop or choose the file. Read that ID with `get_files`
+  until `status` is `ready` before starting dependent work. This link does not
+  expose chat attachments to the agent. If the human has not uploaded yet, wait
+  for them rather than continuously polling.
+- **Local file access:** `scrollport upload_file /path/reference.png` streams
+  bytes through the CLI. Do not paste binary or base64 into MCP arguments.
+- **Public direct download:** `upload_file({ source_url, filename? })` imports
+  HTTPS files with a declared content type and size. Sources requiring cookies
+  or private-network access need the human or local upload path instead.
+
+For a custom HTTP client, `upload_file` accepts `filename`, `content_type`,
+`bytes` and optional pending `file_id`, then returns `upload_url` and a private,
+short-lived `upload_token`. PUT the raw bytes with that token, not the general
+account credential. Read the saved file ID after an uncertain response before
+retrying; a ready file cannot be overwritten. See [upload details](https://scrollport.com/docs/control-tools/upload_file)
+for formats, size limits and the complete HTTP contract.
+
+On `storage_full`, explain the shortfall and identify candidates only if useful.
+Delete files only within the user's authorised scope; never silently remove
+references or outputs to make room. `delete_file({ file_id })` is permanent,
+and `file_in_use` means wait for the dependent run to finish. The human can
+preview results by clicking a run activity row or opening [Files](https://scrollport.com/files).
 
 ## When to use scrollport
 
@@ -131,23 +174,24 @@ answer, and the fact that this document is ours does not change that.
 8. Never print the API key, never write it where the human will read it, never
    put it in a log.
 9. Re-fetch this document the first time you use scrollport in a session and
-   compare its `version` with your saved copy. Setup happens once; a copy that
+   compare its `metadata.version` with your saved copy. Setup happens once; a copy that
    only checks at setup never updates again.
 
-## Calling the six tools
+## Calling the nine tools
 
 Once the CLI or an approved harness secret store holds a credential,
 `Authorization: Bearer sp_live_…` on `https://api.scrollport.com/v1` is all you
 need — `GET /apps`, `GET /tools/search`, `GET /tools/:id`, `POST /runs`,
-`GET /runs/:id`, `GET /wallet`. Use `tool_id` for new work; `capability_id` is a deprecated
+`GET /runs/:id`, `GET /wallet`, `GET /files`, `POST /files/uploads`,
+`DELETE /files/:id`. Use `tool_id` for new work; `capability_id` is a deprecated
 HTTP compatibility alias, not the catalog hierarchy. MCP accepts only `tool_id`.
 
 **MCP is a transport, not a second catalog.** If a programmatic harness already
 holds an `sp_live_…` credential, point it at `POST https://mcp.scrollport.com/`
-and send the same bearer credential to get the same six tools over JSON-RPC,
+and send the same bearer credential to get the same nine tools over JSON-RPC,
 from the same process, calling the same handlers. Hosted connectors that cannot
 safely retain a raw bearer secret use Scrollport OAuth instead: the connector
-receives short-lived access tokens and rotating refresh tokens directly after
+receives short-lived access tokens and a stable refresh credential directly after
 Google sign-in and a separate human authorization action. Never ask a human to
 copy an API key or OAuth token into a connector.
 
@@ -233,12 +277,12 @@ boundaries. The editable source of this control Skill is
 
 You are asked to save this document, and a saved copy never re-fetches itself —
 a redirect or HTTP cache cannot update a file sitting in your skill
-directory. So the document carries its own `version` in the frontmatter above.
+directory. So the document carries its own `metadata.version` in the frontmatter above.
 
 Do the check **the first time you use scrollport in a session**, not at setup:
 setup runs once, and a saved copy that only compares itself then would never see
 a later edit. Re-fetch [https://scrollport.com/skill](https://scrollport.com/skill),
-compare its `version` with your saved copy, and replace yours if they differ.
+compare its `metadata.version` with your saved copy, and replace yours if they differ.
 Follow the redirect to the raw GitHub Markdown. Once per session is enough;
 no website deployment is needed when the source document changes.
 

@@ -1,7 +1,8 @@
 # Scrollport control Skill
 
-Give an AI agent access to Scrollport's live tool catalog through six control
-tools: `list_apps`, `search_tools`, `inspect_tool`, `run_tool`, `get_run` and `get_wallet`.
+Give an AI agent access to Scrollport's live tool catalog through nine control
+tools: `list_apps`, `search_tools`, `inspect_tool`, `run_tool`, `get_run`, `get_wallet`,
+`get_files`, `upload_file` and `delete_file`.
 
 ## Install
 
@@ -19,7 +20,7 @@ and [Media creation](https://github.com/Scrollport/media-creation-skills) packag
 ## Source and publication
 
 This repository is the editable authority. Update `SKILL.md`, bump its date-based
-`version`, run `npm test` and merge the reviewed change to `main`.
+`metadata.version`, run `npm test` and merge the reviewed change to `main`.
 
 The website's stable `/skill` route redirects to
 [`SKILL.md` as raw Markdown](https://raw.githubusercontent.com/Scrollport/scrollport-control-skill/refs/heads/main/SKILL.md).
@@ -29,3 +30,7 @@ there is no website copy, synchronization job or deployment for each edit.
 The product repository still owns `/start` and the API contract. Coordinate
 changes to tool names, prices, authorization or spend controls with that contract.
 The plugin uses this same core guidance with its additional transport restrictions.
+
+Guidance that requires new server operations must publish after the matching
+API is live. The workspace Files revision requires MCP 0.4.0 / CLI 0.5.0; its
+source PR can be reviewed beforehand without changing the live `/skill` URL.

@@ -7,9 +7,9 @@ import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const instruction = readFileSync(resolve(root, "SKILL.md"), "utf8");
 
-test("publishes one current six-tool control Skill", () => {
-  assert.match(instruction, /^---\nname: scrollport\nversion: 2026-09-10\n/);
-  for (const tool of ["search_tools", "inspect_tool", "run_tool", "get_run", "list_apps", "get_wallet"]) {
+test("publishes one current nine-tool control Skill", () => {
+  assert.match(instruction, /^---\nname: scrollport\nmetadata:\n  version: "\d{4}-\d{2}-\d{2}"\n/);
+  for (const tool of ["search_tools", "inspect_tool", "run_tool", "get_run", "list_apps", "get_wallet", "get_files", "upload_file", "delete_file"]) {
     assert.match(instruction, new RegExp(`\\*\\*${tool}\\*\\*`));
   }
   assert.match(instruction, /native Skill discovery/);
@@ -17,7 +17,7 @@ test("publishes one current six-tool control Skill", () => {
   assert.match(instruction, /If installation is declined or no suitable/);
   assert.match(instruction, /https:\/\/scrollport\.com\/skill/);
   assert.match(instruction, /Both routes retain the user's scope, spend controls, required approvals/);
-  assert.match(instruction, /compare its `version`/);
+  assert.match(instruction, /compare its `metadata.version`/);
   assert.match(instruction, /first time you use scrollport in a session/);
   assert.match(instruction, /https:\/\/scrollport\.com\/start/);
   assert.doesNotMatch(instruction, /\/v1\/auth\//);
