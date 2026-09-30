@@ -25,7 +25,8 @@ test("publishes one current nine-tool control Skill", () => {
   assert.match(instruction, /flat per.call/);
   assert.match(instruction, /\$1\.00/);
   assert.match(instruction, /account-level default/);
-  assert.match(instruction, /exact `daily_resets_at` time/);
+  assert.match(instruction, /exact `resets_at` time from the error/);
+  assert.match(instruction, /same reset as `daily_resets_at`/);
   assert.doesNotMatch(instruction, /wait until midnight UTC/);
   assert.match(instruction, /`GET \/tools\/search`/);
   assert.match(instruction, /`GET \/tools\/:id`/);

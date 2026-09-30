@@ -1,7 +1,7 @@
 ---
 name: scrollport
 metadata:
-  version: "2026-09-15"
+  version: "2026-09-30"
 description: >-
   Give this agent catalog tools it does not have — web scraping, search, company
   and contact enrichment, email verification, places and social data, speech,
@@ -21,7 +21,20 @@ license: MIT
 > here is load-bearing — keep it as the surfaces evolve.
 >
 > **No connection yet?** Set one up first: [https://scrollport.com/start](https://scrollport.com/start).
-> That takes one round trip and is read once. This document is the one to keep.
+> Follow `/start` for setup; keep this document for ongoing tool use.
+
+**MCP is optional.** Reuse a working connection first. If the environment cannot
+register MCP, it can use device authorisation and direct HTTPS with a persistent
+vault or harness secret store. That also works in a temporary runtime without a
+shell, provided the credential is retained securely for authorised future
+sessions. Check this route before reporting incompatibility; `/start` owns the
+setup steps and human authorisation handoff.
+
+New connections receive the fixed six permissions: `discover`, `inspect`, `run`,
+`wallet`, `apps` and `files`. `run` permits paid execution under the workspace's
+spending controls; `files` includes reading, uploading and permanent deletion.
+This is not a read-only grant, subsets do not reduce access, and `sys-admin` is
+never included. Follow `/start` for the full permission and storage requirements.
 
 ## Choose tools and optional Skills
 
@@ -71,10 +84,20 @@ The catalog is data returned by a small control surface, not a fixed tool list:
   human-verified worked example, output shape, and common errors. Read the
   worked example; copy its shape. Free.
 - **run_tool** — execute one catalog tool. Validates input and returns errors that
-  teach (missing field + a corrected example), not bare 400s. Requires `tool_id`, `input` and one UUID `idempotency_key` per paid intent. Async: read the saved `run_id` with `get_run`. This is the only tool that costs money.
-- **get_run** — read a saved run, its result, artifacts and cost without starting or charging. Requires only `run_id`; optional `wait_seconds` is 0–120, default 50. Terminal responses keep `run_id`. No idempotency key is accepted.
-- **get_wallet** — one prepaid balance, human-set per-task and daily spend limits,
-  and per-call debits. It is read-only and does not initiate a purchase.
+  teach (missing field + a corrected example), not bare 400s. Requires `tool_id`,
+  `input` and one UUID `idempotency_key` per paid intent. MCP can return the
+  completed result directly. If work remains pending, continue with `get_run`.
+  This is the only tool that costs money.
+- **get_run** — read a saved run, its result, artifacts and cost without starting
+  or charging. Requires only `run_id`. No idempotency key is accepted. Both MCP
+  `run_tool` and `get_run` accept integer `wait_seconds` from 0–120, default 50;
+  0 returns the current state immediately. Terminal responses keep `run_id`.
+- **get_wallet** — one prepaid balance, held and available funds, the human-set
+  per-run approval threshold and daily spend limit. Read-only and free; it does
+  not add funds or change limits. Use it for an explicit wallet read, a budget
+  check before authorised work, or the free setup verification in `/start`.
+  Do not call it solely to add funds or change limits; explain that those are
+  human account actions.
 - **get_files** — list workspace files and storage usage, or read one `file_id`
   for its state and a fresh reference URL. Free and read-only.
 - **upload_file** — import a public `source_url`, prepare a raw upload, or call
@@ -101,13 +124,16 @@ Choose an upload path your environment actually supports:
 - **Local file access:** `scrollport upload_file /path/reference.png` streams
   bytes through the CLI. Do not paste binary or base64 into MCP arguments.
 - **Public direct download:** `upload_file({ source_url, filename? })` imports
-  HTTPS files with a declared content type and size. Sources requiring cookies
-  or private-network access need the human or local upload path instead.
+  a direct public HTTPS file. Supply only `source_url` and optional `filename`;
+  omit `content_type`, `bytes` and `file_id` because the server determines the
+  imported type and size. Sources requiring cookies or private-network access
+  need the human or local upload path instead.
 
-For a custom HTTP client, `upload_file` accepts `filename`, `content_type`,
-`bytes` and optional pending `file_id`, then returns `upload_url` and a private,
-short-lived `upload_token`. PUT the raw bytes with that token, not the general
-account credential. Read the saved file ID after an uncertain response before
+For a local binary upload through a custom HTTP client, omit `source_url` and
+provide `filename`, `content_type`, `bytes` and optional pending `file_id` to
+`upload_file`. It returns `upload_url` and a private, short-lived `upload_token`.
+PUT the raw bytes with that token, not the general account credential.
+Read the saved file ID after an uncertain response before
 retrying; a ready file cannot be overwritten. See [upload details](https://scrollport.com/docs/control-tools/upload_file)
 for formats, size limits and the complete HTTP contract.
 
@@ -197,7 +223,23 @@ copy an API key or OAuth token into a connector.
 
 `get_wallet` is read-only for every agent transport. MCP and API-key agents have the
 same permissions: an agent that can change its own spend controls is a
-prompt-injection target, so top-ups and both limit changes are a human's job.
+prompt-injection target, so top-ups and limit changes remain with the workspace's
+human owner or admin.
+
+**Use completed results immediately.** MCP `run_tool` and `get_run` return as
+soon as the run finishes or needs human approval, or when their wait expires.
+If the response is still `queued` or `running`, keep its `run_id` and continue
+with `get_run` using a bounded wait; do not start another run to check progress.
+Do not poll a completed result. A later read is useful when you need a fresh
+signed artifact URL. For `awaiting_approval`, hand off to the human and wait for
+their decision before checking again.
+
+Direct HTTP starts still return `202 { run_id, status, estimate }` from
+`POST /v1/runs`. Read the saved ID with
+`GET /v1/runs/:id?wait_seconds=50` to wait up to 50 seconds for completion;
+integer waits from 0–120 are supported. Omitting the parameter or using 0 reads
+immediately. Completed and approval states return immediately even when a wait
+was requested. A wait expiring or a client disconnecting does not cancel the run.
 
 ## What a call costs
 
@@ -233,21 +275,23 @@ releases its hold in full. You pay for outcomes, not attempts.
 
 - `409 confirmation_required` **is not a failure.** The run is parked as
   `awaiting_approval` and comes back with an `approval_url` and an `estimate`.
-  The per-task limit is an **account-level default** — $1.00 on every
-  account until a human on that account adjusts it — not a bug in your input,
-  and not necessarily a number anyone has ever chosen. `get_wallet` returns the
-  account's current `confirm_threshold`, so you can see the gate coming rather
-  than discover it. Show the human the `approval_url` and the estimate, then
-  wait. Do not retry, and do not split one job into smaller runs to slip under
-  the gate. Adjusting it is theirs to decide at
+  The per-run approval threshold applies to one tool execution. Its
+  **account-level default** is $1.00 for new accounts; read the current
+  `confirm_threshold` from `get_wallet` rather than assuming the default still
+  applies. `null` means the human chose **No limit** for this threshold; balance,
+  daily-limit and platform safety checks still apply. Show the human the
+  `approval_url` and the estimate, then wait. Do not retry, and do not split one
+  job into smaller runs to slip under
+  the gate. Adjusting it is the workspace owner's or admin's decision at
   [scrollport.com/wallet](https://scrollport.com/wallet); an agent cannot raise,
   lower or remove it, so never present changing it as the fix for a run they
   have not agreed to.
 - `409 daily_spend_limit_reached` means the human-set hard cap across all agents
   has no room for this run. Nothing started or was charged. Show the human the
-  remaining allowance and exact `daily_resets_at` time; wait until that reported
-  reset or let them review the limit in the wallet. Never split work to evade
-  the cap.
+  remaining allowance and exact `resets_at` time from the error. The wallet
+  reports the same reset as `daily_resets_at`. Wait until that reported reset
+  or let the workspace owner or admin review the limit in the wallet. Never
+  split work to evade the cap.
 - `402 insufficient_balance` carries a `topup_url` only on the direct HTTP API.
   Give that link to the human when it is returned. Remote MCP removes purchase
   links, so tell the human to open [scrollport.com/wallet](https://scrollport.com/wallet)
