@@ -1,7 +1,7 @@
 ---
 name: scrollport
 metadata:
-  version: "2026-09-30"
+  version: "2026-10-08"
 description: >-
   Give this agent catalog tools it does not have — web scraping, search, company
   and contact enrichment, email verification, places and social data, speech,
@@ -93,10 +93,10 @@ The catalog is data returned by a small control surface, not a fixed tool list:
   `run_tool` and `get_run` accept integer `wait_seconds` from 0–120, default 50;
   0 returns the current state immediately. Terminal responses keep `run_id`.
 - **get_wallet** — one prepaid balance, held and available funds, the human-set
-  per-run approval threshold and daily spend limit. Read-only and free; it does
-  not add funds or change limits. Use it for an explicit wallet read, a budget
+  approval threshold and daily cap. Read-only and free; it does
+  not add funds or change spending controls. Use it for an explicit wallet read, a budget
   check before authorised work, or the free setup verification in `/start`.
-  Do not call it solely to add funds or change limits; explain that those are
+  Do not call it solely to add funds or change spending controls; explain that those are
   human account actions.
 - **get_files** — list workspace files and storage usage, or read one `file_id`
   for its state and a fresh reference URL. Free and read-only.
@@ -223,7 +223,7 @@ copy an API key or OAuth token into a connector.
 
 `get_wallet` is read-only for every agent transport. MCP and API-key agents have the
 same permissions: an agent that can change its own spend controls is a
-prompt-injection target, so top-ups and limit changes remain with the workspace's
+prompt-injection target, so top-ups and spending-control changes remain with the workspace's
 human owner or admin.
 
 **Use completed results immediately.** MCP `run_tool` and `get_run` return as
@@ -275,13 +275,13 @@ releases its hold in full. You pay for outcomes, not attempts.
 
 - `409 confirmation_required` **is not a failure.** The run is parked as
   `awaiting_approval` and comes back with an `approval_url` and an `estimate`.
-  The per-run approval threshold applies to one tool execution. Its
+  The approval threshold applies to one tool execution. Its
   **account-level default** is $1.00 for new accounts; read the current
   `confirm_threshold` from `get_wallet` rather than assuming the default still
-  applies. `null` means the human chose **No limit** for this threshold; balance,
-  daily-limit and platform safety checks still apply. Show the human the
+  applies. `null` means the human chose **Never ask** for this threshold; balance,
+  daily-cap and platform safety checks still apply. Show the human the
   `approval_url` and the estimate, then wait. Do not retry, and do not split one
-  job into smaller runs to slip under
+  run into smaller runs to slip under
   the gate. Adjusting it is the workspace owner's or admin's decision at
   [scrollport.com/wallet](https://scrollport.com/wallet); an agent cannot raise,
   lower or remove it, so never present changing it as the fix for a run they
@@ -289,8 +289,9 @@ releases its hold in full. You pay for outcomes, not attempts.
 - `409 daily_spend_limit_reached` means the human-set hard cap across all agents
   has no room for this run. Nothing started or was charged. Show the human the
   remaining allowance and exact `resets_at` time from the error. The wallet
-  reports the same reset as `daily_resets_at`. Wait until that reported reset
-  or let the workspace owner or admin review the limit in the wallet. Never
+  reports the same reset as `daily_resets_at`; `daily_spend_limit: null` means
+  **No daily cap**. Wait until that reported reset
+  or let the workspace owner or admin review the daily cap in the wallet. Never
   split work to evade the cap.
 - `402 insufficient_balance` carries a `topup_url` only on the direct HTTP API.
   Give that link to the human when it is returned. Remote MCP removes purchase
